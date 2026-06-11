@@ -23,6 +23,10 @@ export function useAuth() {
 
     useEffect(() => {
         const auth = getFirebaseAuth();
+        if (!auth) {
+            setIsLoading(false);
+            return;
+        }
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
             if (firebaseUser) {
                 const email = firebaseUser.email || '';
@@ -51,6 +55,7 @@ export function useAuth() {
         setError(null);
         try {
             const auth = getFirebaseAuth();
+            if (!auth) throw new Error('Firebase não configurado corretamente.');
             await signInWithEmailAndPassword(auth, email, password);
         } catch (err: any) {
             const message = err.code === 'auth/invalid-credential'
@@ -64,7 +69,9 @@ export function useAuth() {
 
     const logout = useCallback(async () => {
         const auth = getFirebaseAuth();
-        await signOut(auth);
+        if (auth) {
+            await signOut(auth);
+        }
         setUser(null);
     }, []);
 

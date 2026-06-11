@@ -6,7 +6,7 @@ export interface InventoryItem {
     quantity: number;
     validity: string; // MM/AA
     storageLocation: string;
-    mappedAt: FirestoreTimestamp;
+    mappedAt: { seconds: number; nanoseconds: number } | Date;
     mappedBy: string;
 }
 
@@ -21,14 +21,9 @@ export interface RequestItem {
     name: string;
     quantity: number;
     destination: 'PICKING' | 'LOJA' | 'TRANSFERENCIA';
-    fefoAddress: string;
-    status: 'pending' | 'fulfilled' | 'cancelled';
-    createdAt: FirestoreTimestamp;
-    requestedBy: string;
-    fulfilledBy?: string;
-    fulfilledAt?: FirestoreTimestamp;
+    fulfilledAt?: { seconds: number; nanoseconds: number } | Date;
     cancelledBy?: string;
-    cancelledAt?: FirestoreTimestamp;
+    cancelledAt?: { seconds: number; nanoseconds: number } | Date;
 }
 
 export interface MappingSessionItem {

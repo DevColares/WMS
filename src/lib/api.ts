@@ -23,11 +23,15 @@ import type { InventoryItem, RequestItem } from '@/types/inventory';
 const DB_PATH = `artifacts/${APP_ID}/public/data`;
 
 function getInventoryCollection() {
-    return collection(getFirebaseDb(), `${DB_PATH}/inventory`);
+    const db = getFirebaseDb();
+    if (!db) throw new Error('Firestore não configurado.');
+    return collection(db, `${DB_PATH}/inventory`);
 }
 
 function getRequestsCollection() {
-    return collection(getFirebaseDb(), `${DB_PATH}/requests`);
+    const db = getFirebaseDb();
+    if (!db) throw new Error('Firestore não configurado.');
+    return collection(db, `${DB_PATH}/requests`);
 }
 
 // --- INVENTORY ---
@@ -91,7 +95,9 @@ export async function createInventoryItem(data: Omit<InventoryItem, 'id'>): Prom
 }
 
 export async function batchCreateInventoryItems(items: Omit<InventoryItem, 'id'>[]): Promise<void> {
-    const batch = writeBatch(getFirebaseDb());
+    const db = getFirebaseDb();
+    if (!db) throw new Error('Firestore não configurado.');
+    const batch = writeBatch(db);
     items.forEach((item) => {
         const docRef = doc(getInventoryCollection());
         batch.set(docRef, {
@@ -163,9 +169,11 @@ export async function fulfillRequest(
     inventoryItems: InventoryItem[],
     fulfilledBy: string
 ): Promise<void> {
+    const db = getFirebaseDb();
+    if (!db) throw new Error('Firestore não configurado.');
     const requestRef = doc(getRequestsCollection(), requestId);
 
-    await runTransaction(getFirebaseDb(), async (transaction) => {
+    await runTransaction(db, async (transaction) => {
         const requestDoc = await transaction.get(requestRef);
         if (!requestDoc.exists()) throw new Error('Solicitação não encontrada.');
 
