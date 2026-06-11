@@ -13,29 +13,44 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
+// Validação básica
+const missingKeys = Object.entries(firebaseConfig)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+if (missingKeys.length > 0 && typeof window !== 'undefined') {
+    console.error('Firebase Config: Faltando chaves:', missingKeys);
+}
+
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 
-export function getFirebaseApp(): FirebaseApp {
+export function getFirebaseApp(): FirebaseApp | null {
     if (!app) {
+        if (missingKeys.length > 0) {
+            console.error(`Configuração do Firebase incompleta. Faltando: ${missingKeys.join(', ')}`);
+            return null;
+        }
         app = initializeApp(firebaseConfig);
     }
     return app;
 }
 
 export function getFirebaseAuth(): Auth {
-    if (!auth) {
-        auth = getAuth(getFirebaseApp());
+    const firebaseApp = getFirebaseApp();
+    if (!auth && firebaseApp) {
+        auth = getAuth(firebaseApp);
     }
-    return auth;
+    return auth!;
 }
 
 export function getFirebaseDb(): Firestore {
-    if (!db) {
-        db = getFirestore(getFirebaseApp());
+    const firebaseApp = getFirebaseApp();
+    if (!db && firebaseApp) {
+        db = getFirestore(firebaseApp);
     }
-    return db;
+    return db!;
 }
 
 export const APP_ID = firebaseConfig.projectId;
