@@ -1,5 +1,7 @@
 
 
+'use client';
+
 import { useEffect, useState, useMemo } from 'react';
 import { subscribeInventory } from '@/lib/api';
 import { formatFirestoreDate } from '@/lib/utils';
