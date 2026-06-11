@@ -5,6 +5,7 @@ export interface AppUser {
     email: string;
     name: string;
     role: UserRole;
+    tenantId: string;
     storeName: string;
     jobTitle: string;
     photoURL?: string;

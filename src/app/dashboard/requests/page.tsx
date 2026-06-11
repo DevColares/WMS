@@ -10,10 +10,11 @@ import { Modal } from '@/components/ui/Modal';
 import type { InventoryItem, RequestItem } from '@/types/inventory';
 
 export default function RequestsPage() {
-    const [requests, setRequests] = useState<RequestItem[]>([]);
-    const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const { user } = useAuth();
     const { showToast } = useToast();
+
+    const [requests, setRequests] = useState<RequestItem[]>([]);
+    const [inventory, setInventory] = useState<InventoryItem[]>([]);
 
     const [sku, setSku] = useState('');
     const [quantity, setQuantity] = useState('');
@@ -29,13 +30,14 @@ export default function RequestsPage() {
     }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
     useEffect(() => {
-        const unsubRequests = subscribeDailyRequests((items) => setRequests(items));
-        const unsubInventory = subscribeInventory((items) => setInventory(items));
+        if (!user) return;
+        const unsubRequests = subscribeDailyRequests(user.tenantId, (items) => setRequests(items));
+        const unsubInventory = subscribeInventory(user.tenantId, (items) => setInventory(items));
         return () => {
             unsubRequests();
             unsubInventory();
         };
-    }, []);
+    }, [user]);
 
     const productInfo = (() => {
         if (!sku) return null;
@@ -71,7 +73,7 @@ export default function RequestsPage() {
 
         setIsSubmitting(true);
         try {
-            await createRequest({
+            await createRequest(user.tenantId, {
                 sku,
                 name: productInfo.name,
                 quantity: qty,
@@ -91,13 +93,14 @@ export default function RequestsPage() {
     };
 
     const handleFulfill = (requestId: string) => {
+        if (!user) return;
         setConfirmModal({
             isOpen: true,
             title: 'Atender Solicitação',
             message: 'Isso irá deduzir os itens do estoque. Deseja continuar?',
             onConfirm: async () => {
                 try {
-                    await fulfillRequest(requestId, inventory, user?.name || '');
+                    await fulfillRequest(user.tenantId, requestId, inventory, user.name || '');
                     showToast('Solicitação atendida e estoque atualizado!');
                 } catch (err: unknown) {
                     const error = err as Error;
@@ -109,13 +112,14 @@ export default function RequestsPage() {
     };
 
     const handleCancel = (requestId: string) => {
+        if (!user) return;
         setConfirmModal({
             isOpen: true,
             title: 'Cancelar Solicitação',
             message: 'Tem certeza que deseja cancelar esta solicitação?',
             onConfirm: async () => {
                 try {
-                    await cancelRequest(requestId, user?.name || '');
+                    await cancelRequest(user.tenantId, requestId, user.name || '');
                     showToast('Solicitação cancelada com sucesso!');
                 } catch (err: unknown) {
                     const error = err as Error;

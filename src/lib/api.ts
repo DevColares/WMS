@@ -20,18 +20,16 @@ import {
 import { getFirebaseDb, APP_ID } from './firebase';
 import type { InventoryItem, RequestItem } from '@/types/inventory';
 
-const DB_PATH = `artifacts/${APP_ID}/public/data`;
-
-function getInventoryCollection() {
+function getInventoryCollection(tenantId: string) {
     const db = getFirebaseDb();
     if (!db) throw new Error('Firestore não configurado.');
-    return collection(db, `${DB_PATH}/inventory`);
+    return collection(db, `tenants/${tenantId}/data/inventory`);
 }
 
-function getRequestsCollection() {
+function getRequestsCollection(tenantId: string) {
     const db = getFirebaseDb();
     if (!db) throw new Error('Firestore não configurado.');
-    return collection(db, `${DB_PATH}/requests`);
+    return collection(db, `tenants/${tenantId}/data/requests`);
 }
 
 // --- INVENTORY ---
@@ -42,11 +40,11 @@ export interface PaginatedResult<T> {
     hasMore: boolean;
 }
 
-export async function fetchInventoryPage(pageSize: number = 50, lastVisible?: QueryDocumentSnapshot): Promise<PaginatedResult<InventoryItem>> {
-    let q = query(getInventoryCollection(), orderBy('sku'), limit(pageSize));
+export async function fetchInventoryPage(tenantId: string, pageSize: number = 50, lastVisible?: QueryDocumentSnapshot): Promise<PaginatedResult<InventoryItem>> {
+    let q = query(getInventoryCollection(tenantId), orderBy('sku'), limit(pageSize));
 
     if (lastVisible) {
-        q = query(getInventoryCollection(), orderBy('sku'), startAfter(lastVisible), limit(pageSize));
+        q = query(getInventoryCollection(tenantId), orderBy('sku'), startAfter(lastVisible), limit(pageSize));
     }
 
     const snapshot = await getDocs(q);
@@ -59,8 +57,8 @@ export async function fetchInventoryPage(pageSize: number = 50, lastVisible?: Qu
     return { items, lastDoc, hasMore: snapshot.docs.length === pageSize };
 }
 
-export async function searchInventory(searchTerm: string): Promise<InventoryItem[]> {
-    const snapshot = await getDocs(getInventoryCollection());
+export async function searchInventory(tenantId: string, searchTerm: string): Promise<InventoryItem[]> {
+    const snapshot = await getDocs(getInventoryCollection(tenantId));
     const items: InventoryItem[] = [];
     snapshot.forEach((doc) => {
         const data = { id: doc.id, ...doc.data() } as InventoryItem;
@@ -75,8 +73,8 @@ export async function searchInventory(searchTerm: string): Promise<InventoryItem
     return items;
 }
 
-export function subscribeInventory(callback: (items: InventoryItem[]) => void): () => void {
-    const unsubscribe = onSnapshot(getInventoryCollection(), (snapshot) => {
+export function subscribeInventory(tenantId: string, callback: (items: InventoryItem[]) => void): () => void {
+    const unsubscribe = onSnapshot(getInventoryCollection(tenantId), (snapshot) => {
         const items: InventoryItem[] = [];
         snapshot.forEach((doc) => {
             items.push({ id: doc.id, ...doc.data() } as InventoryItem);
@@ -86,20 +84,20 @@ export function subscribeInventory(callback: (items: InventoryItem[]) => void): 
     return unsubscribe;
 }
 
-export async function createInventoryItem(data: Omit<InventoryItem, 'id' | 'mappedAt'>): Promise<string> {
-    const docRef = await addDoc(getInventoryCollection(), {
+export async function createInventoryItem(tenantId: string, data: Omit<InventoryItem, 'id' | 'mappedAt'>): Promise<string> {
+    const docRef = await addDoc(getInventoryCollection(tenantId), {
         ...data,
         mappedAt: Timestamp.fromDate(new Date()),
     });
     return docRef.id;
 }
 
-export async function batchCreateInventoryItems(items: Omit<InventoryItem, 'id' | 'mappedAt'>[]): Promise<void> {
+export async function batchCreateInventoryItems(tenantId: string, items: Omit<InventoryItem, 'id' | 'mappedAt'>[]): Promise<void> {
     const db = getFirebaseDb();
     if (!db) throw new Error('Firestore não configurado.');
     const batch = writeBatch(db);
     items.forEach((item) => {
-        const docRef = doc(getInventoryCollection());
+        const docRef = doc(getInventoryCollection(tenantId));
         batch.set(docRef, {
             ...item,
             mappedAt: Timestamp.fromDate(new Date()),
@@ -110,12 +108,12 @@ export async function batchCreateInventoryItems(items: Omit<InventoryItem, 'id' 
 
 // --- REQUESTS ---
 
-export async function fetchDailyRequests(): Promise<RequestItem[]> {
+export async function fetchDailyRequests(tenantId: string): Promise<RequestItem[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const q = query(
-        getRequestsCollection(),
+        getRequestsCollection(tenantId),
         where('createdAt', '>=', today),
         orderBy('createdAt', 'desc')
     );
@@ -128,12 +126,12 @@ export async function fetchDailyRequests(): Promise<RequestItem[]> {
     return items;
 }
 
-export function subscribeDailyRequests(callback: (items: RequestItem[]) => void): () => void {
+export function subscribeDailyRequests(tenantId: string, callback: (items: RequestItem[]) => void): () => void {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const q = query(
-        getRequestsCollection(),
+        getRequestsCollection(tenantId),
         where('createdAt', '>=', today),
         orderBy('createdAt', 'desc')
     );
@@ -148,7 +146,7 @@ export function subscribeDailyRequests(callback: (items: RequestItem[]) => void)
     return unsubscribe;
 }
 
-export async function createRequest(data: {
+export async function createRequest(tenantId: string, data: {
     sku: string;
     name: string;
     quantity: number;
@@ -156,7 +154,7 @@ export async function createRequest(data: {
     fefoAddress: string;
     requestedBy: string;
 }): Promise<string> {
-    const docRef = await addDoc(getRequestsCollection(), {
+    const docRef = await addDoc(getRequestsCollection(tenantId), {
         ...data,
         status: 'pending',
         createdAt: Timestamp.fromDate(new Date()),
@@ -165,13 +163,14 @@ export async function createRequest(data: {
 }
 
 export async function fulfillRequest(
+    tenantId: string,
     requestId: string,
     inventoryItems: InventoryItem[],
     fulfilledBy: string
 ): Promise<void> {
     const db = getFirebaseDb();
     if (!db) throw new Error('Firestore não configurado.');
-    const requestRef = doc(getRequestsCollection(), requestId);
+    const requestRef = doc(getRequestsCollection(tenantId), requestId);
 
     await runTransaction(db, async (transaction) => {
         const requestDoc = await transaction.get(requestRef);
@@ -201,7 +200,7 @@ export async function fulfillRequest(
 
         for (const item of matchingItems) {
             if (quantityToFulfill <= 0) break;
-            const itemRef = doc(getInventoryCollection(), item.id);
+            const itemRef = doc(getInventoryCollection(tenantId), item.id);
             const freshItemDoc = await transaction.get(itemRef);
             const currentQuantity = freshItemDoc.data()?.quantity || 0;
             const amountToDeduct = Math.min(currentQuantity, quantityToFulfill);
@@ -217,8 +216,8 @@ export async function fulfillRequest(
     });
 }
 
-export async function cancelRequest(requestId: string, cancelledBy: string): Promise<void> {
-    const requestRef = doc(getRequestsCollection(), requestId);
+export async function cancelRequest(tenantId: string, requestId: string, cancelledBy: string): Promise<void> {
+    const requestRef = doc(getRequestsCollection(tenantId), requestId);
     await updateDoc(requestRef, {
         status: 'cancelled',
         cancelledBy,

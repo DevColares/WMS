@@ -65,7 +65,7 @@ export default function ReceivingPage() {
                 storageLocation: store.currentLocation!,
                 mappedBy: user?.name || 'N/A',
             }));
-            await batchCreateInventoryItems(items);
+            await batchCreateInventoryItems(user.tenantId, items);
             showToast(`${store.session.length} itens mapeados salvos com sucesso!`, 'success');
             store.clearSession();
             setLocationConfirmed(false);

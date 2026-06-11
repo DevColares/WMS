@@ -7,17 +7,20 @@ import { subscribeInventory } from '@/lib/api';
 import { formatFirestoreDate } from '@/lib/utils';
 import type { InventoryItem } from '@/types/inventory';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function InventoryPage() {
+    const { user } = useAuth();
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 50;
 
     useEffect(() => {
-        const unsubscribe = subscribeInventory((items) => setInventory(items));
+        if (!user) return;
+        const unsubscribe = subscribeInventory(user.tenantId, (items) => setInventory(items));
         return () => unsubscribe();
-    }, []);
+    }, [user]);
 
     const filteredInventory = useMemo(() => {
         if (!searchTerm) return inventory;

@@ -65,6 +65,7 @@ export function useAuth() {
                     role: (userData.role || mockUser.role) as UserRole,
                     storeName: userData.storeName || mockUser.storeName,
                     jobTitle: userData.jobTitle || mockUser.jobTitle,
+                    tenantId: userData.tenantId || firebaseUser.uid,
                     photoURL: firebaseUser.photoURL || undefined,
                     createdAt: firebaseUser.metadata.creationTime
                         ? new Date(firebaseUser.metadata.creationTime)
@@ -112,7 +113,8 @@ export function useAuth() {
                 name,
                 jobTitle,
                 storeName,
-                role: 'operator'
+                role: 'operator',
+                tenantId: userCredential.user.uid
             };
 
             await setDoc(doc(db, USERS_COLLECTION, newUser.id), {

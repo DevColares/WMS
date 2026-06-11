@@ -1,22 +1,25 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { subscribeInventory, subscribeDailyRequests } from '@/lib/api';
 import { formatFirestoreDate, isNearExpiration, parseValidity } from '@/lib/utils';
 import type { InventoryItem, RequestItem } from '@/types/inventory';
 
 export default function DashboardPage() {
+    const { user } = useAuth();
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [requests, setRequests] = useState<RequestItem[]>([]);
 
     useEffect(() => {
-        const unsubInventory = subscribeInventory((items) => setInventory(items));
-        const unsubRequests = subscribeDailyRequests((items) => setRequests(items));
+        if (!user) return;
+        const unsubInventory = subscribeInventory(user.tenantId, (items) => setInventory(items));
+        const unsubRequests = subscribeDailyRequests(user.tenantId, (items) => setRequests(items));
         return () => {
             unsubInventory();
             unsubRequests();
         };
-    }, []);
+    }, [user]);
 
     const totalSkus = new Set(inventory.map((p) => p.sku)).size;
     const totalItems = inventory.reduce((sum, p) => sum + (p.quantity || 0), 0);
