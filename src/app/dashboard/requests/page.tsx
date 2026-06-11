@@ -82,8 +82,9 @@ export default function RequestsPage() {
             showToast('Solicitação criada com sucesso!');
             setSku('');
             setQuantity('');
-        } catch (err: any) {
-            showToast(err.message || 'Erro ao criar solicitação.', 'error');
+        } catch (err: unknown) {
+            const error = err as Error;
+            showToast(error.message || 'Erro ao criar solicitação.', 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -98,8 +99,9 @@ export default function RequestsPage() {
                 try {
                     await fulfillRequest(requestId, inventory, user?.name || '');
                     showToast('Solicitação atendida e estoque atualizado!');
-                } catch (err: any) {
-                    showToast(err.message || 'Erro ao atender solicitação.', 'error');
+                } catch (err: unknown) {
+                    const error = err as Error;
+                    showToast(error.message || 'Erro ao atender solicitação.', 'error');
                 }
                 setConfirmModal((prev) => ({ ...prev, isOpen: false }));
             },
@@ -115,8 +117,9 @@ export default function RequestsPage() {
                 try {
                     await cancelRequest(requestId, user?.name || '');
                     showToast('Solicitação cancelada com sucesso!');
-                } catch (err: any) {
-                    showToast(err.message || 'Erro ao cancelar solicitação.', 'error');
+                } catch (err: unknown) {
+                    const error = err as Error;
+                    showToast(error.message || 'Erro ao cancelar solicitação.', 'error');
                 }
                 setConfirmModal((prev) => ({ ...prev, isOpen: false }));
             },
