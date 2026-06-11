@@ -1,4 +1,4 @@
-'use client';
+
 
 import { useEffect, useState, useMemo } from 'react';
 import { subscribeInventory } from '@/lib/api';
@@ -153,4 +153,3 @@ export default function InventoryPage() {
             )}
         </div>
     );
-}

@@ -24,8 +24,8 @@ export function useAuth() {
     useEffect(() => {
         const auth = getFirebaseAuth();
         if (!auth) {
-            setIsLoading(false);
-            return;
+            const timer = setTimeout(() => setIsLoading(false), 0);
+            return () => clearTimeout(timer);
         }
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
             if (firebaseUser) {
@@ -57,10 +57,11 @@ export function useAuth() {
             const auth = getFirebaseAuth();
             if (!auth) throw new Error('Firebase não configurado corretamente.');
             await signInWithEmailAndPassword(auth, email, password);
-        } catch (err: any) {
-            const message = err.code === 'auth/invalid-credential'
+        } catch (err: unknown) {
+            const firebaseError = err as { code?: string; message?: string };
+            const message = firebaseError.code === 'auth/invalid-credential'
                 ? 'Credenciais inválidas. Tente novamente.'
-                : err.message || 'Erro ao fazer login.';
+                : firebaseError.message || 'Erro ao fazer login.';
             setError(message);
             setIsLoading(false);
             throw new Error(message);

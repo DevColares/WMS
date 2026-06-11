@@ -33,7 +33,7 @@ export function parseMasterCode(code: string): {
     return { sku, ean, quantity, validity, name };
 }
 
-export function sortByFefo(items: { validity: string }[]): any[] {
+export function sortByFefo<T extends { validity: string }>(items: T[]): T[] {
     return [...items].sort((a, b) => {
         const dateA = a.validity.split('/');
         const dateB = b.validity.split('/');
