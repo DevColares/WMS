@@ -10,7 +10,7 @@ import { Modal } from '@/components/ui/Modal';
 import type { InventoryItem, RequestItem } from '@/types/inventory';
 
 export default function RequestsPage() {
-    const { user } = useAuth();
+    const { user, isLoading } = useAuth();
     const { showToast } = useToast();
 
     const [requests, setRequests] = useState<RequestItem[]>([]);
@@ -38,6 +38,9 @@ export default function RequestsPage() {
             unsubInventory();
         };
     }, [user]);
+
+    if (isLoading) return <div>Carregando...</div>;
+    if (!user) return null;
 
     const productInfo = (() => {
         if (!sku) return null;
@@ -93,14 +96,13 @@ export default function RequestsPage() {
     };
 
     const handleFulfill = (requestId: string) => {
-        if (!user) return;
         setConfirmModal({
             isOpen: true,
             title: 'Atender Solicitação',
             message: 'Isso irá deduzir os itens do estoque. Deseja continuar?',
             onConfirm: async () => {
                 try {
-                    await fulfillRequest(user.tenantId, requestId, inventory, user.name || '');
+                    await fulfillRequest(user.tenantId, requestId, inventory, user.name);
                     showToast('Solicitação atendida e estoque atualizado!');
                 } catch (err: unknown) {
                     const error = err as Error;
@@ -112,14 +114,13 @@ export default function RequestsPage() {
     };
 
     const handleCancel = (requestId: string) => {
-        if (!user) return;
         setConfirmModal({
             isOpen: true,
             title: 'Cancelar Solicitação',
             message: 'Tem certeza que deseja cancelar esta solicitação?',
             onConfirm: async () => {
                 try {
-                    await cancelRequest(user.tenantId, requestId, user.name || '');
+                    await cancelRequest(user.tenantId, requestId, user.name);
                     showToast('Solicitação cancelada com sucesso!');
                 } catch (err: unknown) {
                     const error = err as Error;

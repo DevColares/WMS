@@ -52,7 +52,7 @@ export default function ReceivingPage() {
             showToast('Nenhum item na sessão para salvar.', 'error');
             return;
         }
-        if (!store.currentLocation) return;
+        if (!store.currentLocation || !user) return;
 
         setIsSaving(true);
         try {
@@ -63,7 +63,7 @@ export default function ReceivingPage() {
                 quantity: item.quantity,
                 validity: item.validity,
                 storageLocation: store.currentLocation!,
-                mappedBy: user?.name || 'N/A',
+                mappedBy: user.name,
             }));
             await batchCreateInventoryItems(user.tenantId, items);
             showToast(`${store.session.length} itens mapeados salvos com sucesso!`, 'success');
