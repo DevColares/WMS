@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 
@@ -78,8 +79,17 @@ export default function LoginPage() {
                         </Button>
                     </div>
 
-                    <div className="text-xs text-gray-500 dark:text-gray-400 text-center space-y-1">
-                        <p>Credenciais de teste:</p>
+                    <div className="text-center">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Não tem uma conta?{' '}
+                            <Link href="/signup" className="text-blue-600 hover:underline font-semibold">
+                                Cadastre-se
+                            </Link>
+                        </p>
+                    </div>
+
+                    <div className="text-xs text-gray-500 dark:text-gray-400 text-center pt-4 border-t dark:border-gray-700 space-y-1">
+                        <p className="font-semibold">Credenciais de teste:</p>
                         <p>admin@wms.com / operator@wms.com / viewer@wms.com</p>
                         <p>(qualquer senha com 6+ caracteres)</p>
                     </div>
