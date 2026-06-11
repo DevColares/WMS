@@ -86,7 +86,7 @@ export function subscribeInventory(callback: (items: InventoryItem[]) => void): 
     return unsubscribe;
 }
 
-export async function createInventoryItem(data: Omit<InventoryItem, 'id'>): Promise<string> {
+export async function createInventoryItem(data: Omit<InventoryItem, 'id' | 'mappedAt'>): Promise<string> {
     const docRef = await addDoc(getInventoryCollection(), {
         ...data,
         mappedAt: Timestamp.fromDate(new Date()),
@@ -94,7 +94,7 @@ export async function createInventoryItem(data: Omit<InventoryItem, 'id'>): Prom
     return docRef.id;
 }
 
-export async function batchCreateInventoryItems(items: Omit<InventoryItem, 'id'>[]): Promise<void> {
+export async function batchCreateInventoryItems(items: Omit<InventoryItem, 'id' | 'mappedAt'>[]): Promise<void> {
     const db = getFirebaseDb();
     if (!db) throw new Error('Firestore não configurado.');
     const batch = writeBatch(db);
