@@ -13,17 +13,11 @@ export default function ReceivingPage() {
     const { user } = useAuth();
     const { showToast } = useToast();
     const store = useMappingStore();
-    const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [locationInput, setLocationInput] = useState('');
     const [codeInput, setCodeInput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [locationConfirmed, setLocationConfirmed] = useState(false);
     const codeInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        const unsubscribe = subscribeInventory((items) => setInventory(items));
-        return () => unsubscribe();
-    }, []);
 
     const handleConfirmLocation = () => {
         if (!locationInput.trim()) {
@@ -69,7 +63,6 @@ export default function ReceivingPage() {
                 quantity: item.quantity,
                 validity: item.validity,
                 storageLocation: store.currentLocation!,
-                mappedAt: null as any, // Will be set by the server
                 mappedBy: user?.name || 'N/A',
             }));
             await batchCreateInventoryItems(items);
@@ -77,8 +70,9 @@ export default function ReceivingPage() {
             store.clearSession();
             setLocationConfirmed(false);
             setLocationInput('');
-        } catch (err: any) {
-            showToast(err.message || 'Erro ao salvar itens.', 'error');
+        } catch (err: unknown) {
+            const error = err as Error;
+            showToast(error.message || 'Erro ao salvar itens.', 'error');
         } finally {
             setIsSaving(false);
         }
