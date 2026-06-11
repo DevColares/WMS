@@ -37,20 +37,20 @@ export function getFirebaseApp(): FirebaseApp | null {
     return app;
 }
 
-export function getFirebaseAuth(): Auth {
+export function getFirebaseAuth(): Auth | null {
     const firebaseApp = getFirebaseApp();
     if (!auth && firebaseApp) {
         auth = getAuth(firebaseApp);
     }
-    return auth!;
+    return auth;
 }
 
-export function getFirebaseDb(): Firestore {
+export function getFirebaseDb(): Firestore | null {
     const firebaseApp = getFirebaseApp();
     if (!db && firebaseApp) {
         db = getFirestore(firebaseApp);
     }
-    return db!;
+    return db;
 }
 
 export const APP_ID = firebaseConfig.projectId;
